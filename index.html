@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anonimisering Demonstrator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div>
+        <h1>Interactieve Anonimisering Demonstrator</h1>
+        <p>Verken hoe datasets worden geanonimiseerd met realtime inzichten, instellingen en gamification.</p>
+      </div>
+      <div class="step-indicator" aria-live="polite">
+        <span data-step="upload" class="active">Uploaden</span>
+        <span data-step="processing">Verwerken</span>
+        <span data-step="summary">Privacyoverzicht</span>
+        <span data-step="settings">Instellingen</span>
+        <span data-step="game">Gamification</span>
+      </div>
+    </header>
+
+    <main>
+      <section id="uploadSection" class="card">
+        <div class="tab-header" role="tablist">
+          <button id="tabUpload" role="tab" aria-selected="true" class="active">Data uploaden</button>
+          <button id="tabManual" role="tab" aria-selected="false">Handmatig invoeren</button>
+        </div>
+
+        <div id="uploadPane" role="tabpanel">
+          <div class="dropzone" id="dropzone" tabindex="0" aria-label="CSV uploadzone">
+            <div class="drop-content">
+              <span class="icon">📁</span>
+              <p><strong>Sleep je CSV hierheen</strong> of klik om te bladeren.</p>
+              <input type="file" id="fileInput" accept=".csv" aria-label="Selecteer CSV bestand" />
+              <p class="hint">Gebruik bij voorkeur het voorbeeldbestand uit de assets-map.</p>
+            </div>
+          </div>
+          <div class="file-info" id="fileInfo" hidden>
+            <p>Geselecteerd bestand: <span id="fileName"></span></p>
+          </div>
+        </div>
+
+        <div id="manualPane" role="tabpanel" hidden>
+          <form id="manualForm" class="form-grid">
+            <div class="form-field">
+              <label for="voornaam">Voornaam</label>
+              <input type="text" id="voornaam" required />
+            </div>
+            <div class="form-field">
+              <label for="achternaam">Achternaam</label>
+              <input type="text" id="achternaam" required />
+            </div>
+            <div class="form-field">
+              <label for="email">E-mail</label>
+              <input type="email" id="email" required />
+            </div>
+            <div class="form-field">
+              <label for="leeftijd">Leeftijd</label>
+              <input type="number" id="leeftijd" min="12" max="25" required />
+            </div>
+            <div class="form-field">
+              <label for="woonplaats">Woonplaats</label>
+              <input type="text" id="woonplaats" required />
+            </div>
+            <div class="form-field">
+              <label for="school">School</label>
+              <input type="text" id="school" required />
+            </div>
+            <div class="form-field">
+              <label for="adres">Adres</label>
+              <input type="text" id="adres" required />
+            </div>
+            <div class="form-field">
+              <label for="geboortedatum">Geboortedatum</label>
+              <input type="date" id="geboortedatum" required />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn primary">Opslaan</button>
+              <button type="button" id="resetForm" class="btn ghost">Verwijderen</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="dataset-preview">
+          <div class="preview-header">
+            <h2>Dataset voorbeeld</h2>
+            <p>De eerste vijf records worden hieronder getoond.</p>
+          </div>
+          <div class="table-wrapper" id="previewTable" aria-live="polite"></div>
+        </div>
+
+        <div class="dataset-list">
+          <h2>Dataset records</h2>
+          <div class="table-wrapper" id="datasetTable" aria-live="polite"></div>
+        </div>
+
+        <div class="actions">
+          <button id="startProcessing" class="btn accent" disabled>Start verwerken</button>
+        </div>
+      </section>
+
+      <section id="processingSection" class="card hidden" aria-live="polite">
+        <div class="processing-card">
+          <h2>Data verwerken…</h2>
+          <p>Sluit deze pagina niet tijdens de verwerking.</p>
+          <div class="progress-bar">
+            <div class="progress" id="progressBar" style="width:0%"></div>
+          </div>
+          <p class="progress-percentage"><span id="progressValue">0</span>%</p>
+        </div>
+      </section>
+
+      <section id="summarySection" class="card hidden">
+        <div class="summary-header">
+          <h2>Verwerken voltooid — privacyoverzicht</h2>
+          <p>Bekijk de belangrijkste privacy-indicatoren van de dataset.</p>
+        </div>
+        <div class="kpi-grid" id="kpiGrid">
+          <div class="kpi">
+            <span class="kpi-label">Anonimiteitsscore</span>
+            <span class="kpi-value" id="anonScore">0%</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">Unieke records</span>
+            <span class="kpi-value" id="uniqueRecords">0</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">Minimale groepsgrootte (k)</span>
+            <span class="kpi-value" id="minK">0</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi-label">Uniekheidsscore</span>
+            <span class="kpi-value" id="uniqueScore">0%</span>
+          </div>
+        </div>
+        <div class="summary-actions">
+          <button id="viewDetails" class="link-btn">Bekijk details</button>
+          <div class="action-group">
+            <button id="backToUpload" class="btn ghost">Terug naar uploaden</button>
+            <button id="toSettings" class="btn accent">Doorgaan naar anonymiseringsinstellingen</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="settingsSection" class="card hidden">
+        <div class="settings-header">
+          <h2>Anonymiseringsinstellingen</h2>
+          <p>Stel het gewenste niveau van anonimisering in en bekijk direct de impact.</p>
+        </div>
+        <div class="slider-row">
+          <label for="anonymSlider">Niveau</label>
+          <input type="range" id="anonymSlider" min="0" max="100" value="40" />
+          <span id="sliderValue">40</span>
+        </div>
+        <div class="settings-grid">
+          <div class="preview-card">
+            <h3>Voorbeeldrecord</h3>
+            <ul id="previewRecord"></ul>
+          </div>
+          <div class="preview-card">
+            <h3>Privacyoverzicht</h3>
+            <ul class="metrics" id="settingsMetrics"></ul>
+          </div>
+        </div>
+        <div class="settings-actions">
+          <button id="resetSettings" class="btn ghost">Terugzetten naar standaard</button>
+          <button id="applySettings" class="btn accent">Toepassen instellingen</button>
+        </div>
+      </section>
+
+      <section id="gameSection" class="card hidden">
+        <div class="game-header">
+          <h2>Gamification ronde</h2>
+          <p>Houd <strong>anonimiteit ≥ 70%</strong> én <strong>bruikbaarheid ≥ 60%</strong>.</p>
+        </div>
+        <div class="scoreboard">
+          <div class="score">
+            <span class="label">Anonimiteit</span>
+            <span class="value" id="gameAnon">0%</span>
+          </div>
+          <div class="score">
+            <span class="label">Bruikbaarheid</span>
+            <span class="value" id="gameUtility">0%</span>
+          </div>
+          <div class="score">
+            <span class="label">Ronde</span>
+            <span class="value" id="gameRound">1 / 5</span>
+          </div>
+        </div>
+        <div class="game-cards" id="gameCards">
+          <button class="game-card" data-choice="A">
+            <h3>A. Sterke anonimisering</h3>
+            <p>Hashing + k-anonimity</p>
+            <span class="effect">+30% anonimiteit / −20% bruikbaarheid</span>
+          </button>
+          <button class="game-card" data-choice="B">
+            <h3>B. Slim maskeren</h3>
+            <p>Generalisatie + noise</p>
+            <span class="effect">+15% anonimiteit / −5% bruikbaarheid</span>
+          </button>
+          <button class="game-card" data-choice="C">
+            <h3>C. Focus op analyse</h3>
+            <p>Behoud data voor analyse</p>
+            <span class="effect">+0% anonimiteit / +10% bruikbaarheid</span>
+          </button>
+        </div>
+        <div id="gameResult" class="game-result" hidden></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="detailsModal" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+    <div class="modal-content">
+      <button class="modal-close" id="closeModal" aria-label="Sluit details">×</button>
+      <h3 id="modalTitle">Top combinaties</h3>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <div id="confetti" class="confetti" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
